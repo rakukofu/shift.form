@@ -90,7 +90,7 @@ def admin_logout():
 
 @app.route('/admin/users', methods=['GET'])
 @login_required
-def manage_users():
+def admin():
     if not session.get('is_admin'):  # 管理者権限を確認
         flash('アクセス権限がありません。', 'error')
         return redirect(url_for('index'))
@@ -115,7 +115,7 @@ def add_user():
         db.session.add(new_user)
         db.session.commit()
         flash('新しいユーザーを追加しました。', 'success')
-        return redirect(url_for('manage_users'))
+        return redirect(url_for('admin'))
 
     return render_template('add_user.html')  # ユーザー追加フォームを表示
 
@@ -129,7 +129,7 @@ def edit_user(user_id):
     user = User.query.get(user_id)
     if not user:
         flash('ユーザーが見つかりませんでした。', 'error')
-        return redirect(url_for('manage_users'))
+        return redirect(url_for('admin'))
 
     if request.method == 'POST':
         user.username = request.form['username']
@@ -138,7 +138,7 @@ def edit_user(user_id):
             user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
         db.session.commit()
         flash('ユーザー情報を更新しました。', 'success')
-        return redirect(url_for('manage_users'))
+        return redirect(url_for('admin'))
 
     return render_template('edit_user.html', user=user)
 
@@ -157,7 +157,7 @@ def delete_user(user_id):
     else:
         flash('ユーザーが見つかりませんでした。', 'error')
 
-    return redirect(url_for('manage_users'))
+    return redirect(url_for('admin'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
