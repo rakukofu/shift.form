@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>新規ユーザー追加</title>
+</head>
+<body>
+    <h1>新規ユーザー追加</h1>
+    <form method="POST" action="{{ url_for('add_user') }}">
+        <label>ユーザーネーム: <input type="text" name="username" required></label><br>
+        <label>パスワード: <input type="password" name="password" required></label><br>
+        <button type="submit">追加</button>
+    </form>
+</body>
+</html>

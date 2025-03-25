@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ユーザー情報編集</title>
+</head>
+<body>
+    <h1>ユーザー情報編集</h1>
+    <form method="POST" action="{{ url_for('edit_user', user_id=user.id) }}">
+        <label>ユーザーネーム: <input type="text" name="username" value="{{ user.username }}" required></label><br>
+        <label>新しいパスワード（変更する場合のみ）: <input type="password" name="password"></label><br>
+        <button type="submit">更新</button>
+    </form>
+</body>
+</html>

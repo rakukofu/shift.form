@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>シフトカレンダー</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+	<link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+</head>
+<body>
+    <h1>シフトカレンダー</h1>
+
+    <div id="calendar-header">
+        <button id="prev-month" aria-label="前の月へ">← 前の月</button>
+        <span id="calendar-title" style="font-size: 1.5em; font-weight: bold;"></span>
+        <button id="next-month" aria-label="次の月へ">次の月 →</button>
+    </div>
+
+    <div id="calendar-container"></div>
+
+<!-- 日付詳細を表示するコンテナ -->
+    <div id="details-container">
+        <h2>シフト詳細</h2>
+        <div id="details-content">
+            <p>日付を選択してください。</p>
+        </div>
+    </div>
+
+
+    <script src="{{ url_for('static', filename='viewer.js') }}"></script>
+</body>
+</html>
