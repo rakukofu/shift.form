@@ -5,8 +5,30 @@
     <title>管理者ダッシュボード</title>
 </head>
 <body>
-    <h1>管理者専用ページ</h1>
-    <p>ここに管理者用の操作を追加できます。</p>
-    <a href="/admin_logout">ログアウト</a>
+    <h1>ユーザー管理</h1>
+    <a href="{{ url_for('add_user') }}">新規ユーザー追加</a>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>ユーザーネーム</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td>{{ user.username }}</td>
+                <td>
+                    <a href="{{ url_for('edit_user', user_id=user.id) }}">編集</a>
+                    <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" style="display:inline;">
+                        <button type="submit">削除</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>
