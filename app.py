@@ -96,7 +96,7 @@ def manage_users():
         return redirect(url_for('index'))
     
     users = User.query.all()  # データベースから全ユーザーを取得
-    return render_template('manage_users.html', users=users)
+    return render_template('admin.html', users=users)
 
 @app.route('/admin/users/add', methods=['GET', 'POST'])
 @login_required
