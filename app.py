@@ -46,6 +46,15 @@ def load_user(user_id):
 with app.app_context():
     db.create_all()
 
+@app.route('/admin')
+@login_required
+def admin_dashboard():
+    if not session.get('is_admin'):
+        flash('アクセス権限がありません。', 'error')
+        return redirect(url_for('admin.html'))
+    users = User.query.all()
+    return render_template('admin.html', users=users)
+
 # ルート
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login():
@@ -59,14 +68,7 @@ def admin_login():
             flash('パスワードが間違っています。', 'error')
     return render_template('admin_login.html')
 
-@app.route('/admin')
-@login_required
-def admin_dashboard():
-    if not session.get('is_admin'):
-        flash('アクセス権限がありません。', 'error')
-        return redirect(url_for('index'))
-    users = User.query.all()
-    return render_template('admin.html', users=users)
+
 
 @app.route('/admin/users/add', methods=['GET', 'POST'])
 @login_required
