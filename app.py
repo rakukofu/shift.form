@@ -59,14 +59,15 @@ def admin_dashboard():
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
-        password = request.form['password']
-        if password == ADMIN_PASSWORD:
-            session['is_admin'] = True
+        password = request.form.get('password')  # フォームからパスワードを取得
+        if password == ADMIN_PASSWORD:  # 入力値と設定値を比較
+            session['is_admin'] = True  # 管理者フラグをセッションに保存
             flash('管理者としてログインしました。', 'success')
-            return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('admin_dashboard'))  # 管理者ページにリダイレクト
         else:
-            flash('パスワードが間違っています。', 'error')
-    return render_template('admin_login.html')
+            flash('パスワードが間違っています。', 'error')  # エラーをフラッシュメッセージに表示
+    return render_template('admin_login.html')  # ログインページをレンダリング
+
 
 
 
