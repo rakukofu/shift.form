@@ -8,7 +8,7 @@ import os
 ADMIN_PASSWORD = '0131'
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your_default_secret_key')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/app.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # 初期化
@@ -51,11 +51,10 @@ with app.app_context():
 def admin_dashboard():
     if not session.get('is_admin'):
         flash('アクセス権限がありません。', 'error')
-        return redirect(url_for('admin.html'))
+        return redirect(url_for('admin_login'))  # 修正点：url_forに正しいビュー関数を指定
     users = User.query.all()
     return render_template('admin.html', users=users)
 
-# ルート
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
