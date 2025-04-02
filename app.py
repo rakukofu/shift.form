@@ -1,4 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+import os
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
@@ -8,7 +10,9 @@ import os
 ADMIN_PASSWORD = '0131'
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your_default_secret_key')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/app.db'
+
+# データベース接続設定
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///instance/app.db')  # PostgreSQL の URL を環境変数から取得
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # 初期化
@@ -38,6 +42,7 @@ class Shift(db.Model):
             'afternoon': self.afternoon
         }
 
+# ログインユーザー情報を取得
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -51,24 +56,21 @@ with app.app_context():
 def admin_dashboard():
     if not session.get('is_admin'):
         flash('アクセス権限がありません。', 'error')
-        return redirect(url_for('admin_login'))  # 修正点：url_forに正しいビュー関数を指定
+        return redirect(url_for('admin_login'))  
     users = User.query.all()
     return render_template('admin.html', users=users)
 
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST':
-        password = request.form.get('password')  # フォームからパスワードを取得
-        if password == ADMIN_PASSWORD:  # 入力値と設定値を比較
-            session['is_admin'] = True  # 管理者フラグをセッションに保存
+        password = request.form.get('password')  
+        if password == ADMIN_PASSWORD:
+            session['is_admin'] = True
             flash('管理者としてログインしました。', 'success')
-            return redirect(url_for('admin_dashboard'))  # 管理者ページにリダイレクト
+            return redirect(url_for('admin_dashboard'))
         else:
-            flash('パスワードが間違っています。', 'error')  # エラーをフラッシュメッセージに表示
-    return render_template('admin_login.html')  # ログインページをレンダリング
-
-
-
+            flash('パスワードが間違っています。', 'error')
+    return render_template('admin_login.html')
 
 @app.route('/admin/users/add', methods=['GET', 'POST'])
 @login_required
@@ -128,8 +130,6 @@ def delete_user(user_id):
         flash('指定されたユーザーが見つかりません。', 'error')
     
     return redirect(url_for('admin_dashboard'))
-
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
