@@ -8,7 +8,7 @@ import os
 ADMIN_PASSWORD = '0131'
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your_default_secret_key')
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/app.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL", "sqlite:///instance/app.db")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # 初期化
