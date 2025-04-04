@@ -1,14 +1,16 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+import os
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_bcrypt import Bcrypt
-import os
 
 # 環境変数と設定
 ADMIN_PASSWORD = '0131'
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your_default_secret_key')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL", "sqlite:///instance/app.db")
+
+# データベース接続設定
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///instance/app.db')  # PostgreSQL の URL を環境変数から取得
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # 初期化
@@ -38,6 +40,7 @@ class Shift(db.Model):
             'afternoon': self.afternoon
         }
 
+# ログインユーザー情報を取得
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -46,90 +49,15 @@ def load_user(user_id):
 with app.app_context():
     db.create_all()
 
-@app.route('/admin')
+@app.route('/')
 @login_required
-def admin_dashboard():
-    if not session.get('is_admin'):
-        flash('アクセス権限がありません。', 'error')
-        return redirect(url_for('admin_login'))  # 修正点：url_forに正しいビュー関数を指定
-    users = User.query.all()
-    return render_template('admin.html', users=users)
+def index():
+    return render_template('index.html')
 
-@app.route('/admin_login', methods=['GET', 'POST'])
-def admin_login():
-    if request.method == 'POST':
-        password = request.form.get('password')  # フォームからパスワードを取得
-        if password == ADMIN_PASSWORD:  # 入力値と設定値を比較
-            session['is_admin'] = True  # 管理者フラグをセッションに保存
-            flash('管理者としてログインしました。', 'success')
-            return redirect(url_for('admin_dashboard'))  # 管理者ページにリダイレクト
-        else:
-            flash('パスワードが間違っています。', 'error')  # エラーをフラッシュメッセージに表示
-    return render_template('admin_login.html')  # ログインページをレンダリング
-
-
-
-
-@app.route('/admin/users/add', methods=['GET', 'POST'])
+@app.route('/viewer')
 @login_required
-def add_user():
-    if not session.get('is_admin'):
-        flash('アクセス権限がありません。', 'error')
-        return redirect(url_for('index'))
-    
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        new_user = User(username=username, password=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
-        flash('新しいユーザーを追加しました。', 'success')
-        return redirect(url_for('admin_dashboard'))
-    
-    return render_template('add_user.html')
-    
-@app.route('/admin/users/edit/<int:user_id>', methods=['GET', 'POST'])
-@login_required
-def edit_user(user_id):
-    if not session.get('is_admin'):
-        flash('アクセス権限がありません。', 'error')
-        return redirect(url_for('index'))
-    
-    user = User.query.get(user_id)
-    if not user:
-        flash('指定されたユーザーが見つかりません。', 'error')
-        return redirect(url_for('admin_dashboard'))
-    
-    if request.method == 'POST':
-        user.username = request.form['username']
-        new_password = request.form['password']
-        if new_password:
-            user.password = bcrypt.generate_password_hash(new_password).decode('utf-8')
-        db.session.commit()
-        flash('ユーザー情報を更新しました。', 'success')
-        return redirect(url_for('admin_dashboard'))
-    
-    return render_template('edit_users.html', user=user)
-
-@app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
-@login_required
-def delete_user(user_id):
-    if not session.get('is_admin'):
-        flash('アクセス権限がありません。', 'error')
-        return redirect(url_for('index'))
-    
-    user = User.query.get(user_id)
-    if user:
-        db.session.delete(user)
-        db.session.commit()
-        flash(f'ユーザー {user.username} を削除しました。', 'success')
-    else:
-        flash('指定されたユーザーが見つかりません。', 'error')
-    
-    return redirect(url_for('admin_dashboard'))
-
-
+def viewer():
+    return render_template('viewer.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -145,10 +73,44 @@ def login():
             flash('ユーザー名またはパスワードが間違っています。', 'error')
     return render_template('login.html')
 
-@app.route('/')
+@app.route('/logout')
 @login_required
-def index():
-    return render_template('index.html')
+def logout():
+    logout_user()
+    flash('ログアウトしました。', 'success')
+    return redirect(url_for('login'))
+
+@app.route('/get_shifts/<date>')
+@login_required
+def get_shifts(date):
+    shifts = Shift.query.filter_by(date=date).all()
+    return jsonify([shift.to_dict() for shift in shifts])
+
+@app.route('/submit', methods=['POST'])
+@login_required
+def submit():
+    shifts = []
+    for key, value in request.form.items():
+        if 'morning' in key or 'afternoon' in key:
+            date, time = key.split('-')[0:2], key.split('-')[-1]
+            user_name = current_user.username
+            shift = Shift(date='-'.join(date), user_name=user_name, morning=value if 'morning' in key else None,
+                          afternoon=value if 'afternoon' in key else None)
+            shifts.append(shift)
+
+    db.session.bulk_save_objects(shifts)
+    db.session.commit()
+    flash('シフトが正常に保存されました。', 'success')
+    return redirect(url_for('index'))
+
+@app.route('/admin')
+@login_required
+def admin_dashboard():
+    if not session.get('is_admin'):
+        flash('アクセス権限がありません。', 'error')
+        return redirect(url_for('login'))
+    users = User.query.all()
+    return render_template('admin.html', users=users)
 
 @app.errorhandler(404)
 def not_found_error(error):
