@@ -17,3 +17,4 @@ flask_bcrypt
 flask_sqlalchemy
 flask_login
 psycopg2
+psycopg2-binary
