@@ -3,71 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>シフト管理システム</title>
+    <title>シフト表提出</title>
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>シフト管理システム</h1>
-        
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }}">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+    <h1>シフト表</h1>
+    
+    <div id="message-container"></div>
 
-        {% if not current_user.is_authenticated %}
-        <div class="login-form">
-            <h2>ログイン</h2>
-            <form method="POST" action="{{ url_for('index') }}">
-                <div class="form-group">
-                    <label for="username">ユーザー名:</label>
-                    <input type="text" id="username" name="username" required>
-                </div>
-                <div class="form-group">
-                    <label for="password">パスワード:</label>
-                    <input type="password" id="password" name="password" required>
-                </div>
-                <button type="submit">ログイン</button>
-            </form>
-        </div>
-        {% else %}
-        <div class="shift-form">
-            <h2>シフトを送信</h2>
-            <form method="POST" action="{{ url_for('index') }}">
-                <div class="form-group">
-                    <label for="date">日付:</label>
-                    <input type="date" id="date" name="date" required>
-                </div>
-                <div class="form-group">
-                    <label for="user_name">名前:</label>
-                    <input type="text" id="user_name" name="user_name" value="{{ current_user.username }}" readonly>
-                </div>
-                <div class="form-group">
-                    <label for="morning">午前:</label>
-                    <select id="morning" name="morning">
-                        <option value="">選択してください</option>
-                        <option value="出勤">出勤</option>
-                        <option value="休み">休み</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="afternoon">午後:</label>
-                    <select id="afternoon" name="afternoon">
-                        <option value="">選択してください</option>
-                        <option value="出勤">出勤</option>
-                        <option value="休み">休み</option>
-                    </select>
-                </div>
-                <button type="submit">送信</button>
-            </form>
-            <div class="logout-link">
-                <a href="{{ url_for('logout') }}">ログアウト</a>
-            </div>
-        </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="message {{ category }}">{{ message }}</div>
+            {% endfor %}
         {% endif %}
+    {% endwith %}
+
+    {% if not current_user.is_authenticated %}
+    <div class="login-form">
+        <h2>ログイン</h2>
+        <form method="POST" action="{{ url_for('index') }}">
+            <div class="form-group">
+                <label for="username">ユーザー名:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">パスワード:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">ログイン</button>
+        </form>
     </div>
+    {% else %}
+    <form id="shift-form" method="POST" action="{{ url_for('index') }}">
+        <button type="submit" title="このボタンでシフトを送信します">シフトを送信</button>
+
+        <p>
+            <a href="{{ url_for('viewer') }}" style="font-size: 16px; color: blue;">▶ 提出されたシフトを見る</a>
+        </p>
+
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button type="button" onclick="changeMonth(-1)" aria-label="前の月に変更する">← 前の月</button>
+            <span id="calendar-title" style="font-size: 1.5em; font-weight: bold;"></span>
+            <button type="button" onclick="changeMonth(1)" aria-label="次の月に変更する">次の月 →</button>
+        </div>
+
+        <div id="calendar-container"></div>
+        <div id="shift-details"></div>
+    </form>
+    <div class="logout-link">
+        <a href="{{ url_for('logout') }}">ログアウト</a>
+    </div>
+    {% endif %}
+
+    <script>
+        // グローバル変数の定義
+        let currentYear = 2025;
+        let currentMonth = 1;
+
+        const holidays = [
+            { month: 1, day: 1 }, { month: 2, day: 11 }, { month: 4, day: 29 },
+            { month: 5, day: 3 }, { month: 5, day: 4 }, { month: 5, day: 5 },
+            { month: 7, day: 20 }, { month: 9, day: 15 }, { month: 10, day: 14 },
+            { month: 11, day: 3 }, { month: 11, day: 23 }, { month: 12, day: 23 }
+        ];
+
+        // カレンダー生成関数
+        function generateCalendar(year, month) {
+            const daysInMonth = new Date(year, month, 0).getDate();
+            const firstDay = new Date(year, month - 1, 1).getDay();
+            let calendarHTML = `<h2>${year}年 ${month}月</h2><table><thead>
+                                    <tr><th>日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th>土</th></tr>
+                                </thead><tbody>`;
+
+            let dayCounter = 1;
+
+            for (let i = 0; i < 6; i++) {
+                calendarHTML += `<tr>`;
+                for (let j = 0; j < 7; j++) {
+                    let dayClass = j === 0 || j === 6 ? 'rest' : 'weekday';
+                    const isHoliday = holidays.some(holiday => holiday.month === month && holiday.day === dayCounter);
+
+                    if (isHoliday) dayClass = "holiday";
+                    
+                    if (i === 0 && j < firstDay) {
+                        calendarHTML += `<td></td>`;
+                    } else if (dayCounter <= daysInMonth) {
+                        // シフト選択肢を追加
+                        calendarHTML += `<td class="${dayClass}">
+                                            ${dayCounter}<br>
+                                            <div class="morning">
+                                                <label for="morning-${dayCounter}">午前</label>
+                                                <select id="morning-${dayCounter}" name="${year}-${month}-${dayCounter}-morning" title="午前のシフトを選択してください">
+                                                    <option value="未回答">未回答</option>
+                                                    <option value="〇">〇</option>
+                                                    <option value="×">×</option>
+                                                </select>
+                                            </div>
+                                            <div class="afternoon">
+                                                <label for="afternoon-${dayCounter}">午後</label>
+                                                <select id="afternoon-${dayCounter}" name="${year}-${month}-${dayCounter}-afternoon" title="午後のシフトを選択してください">
+                                                    <option value="未回答">未回答</option>
+                                                    <option value="〇">〇</option>
+                                                    <option value="×">×</option>
+                                                </select>
+                                            </div>
+                                        </td>`;
+                        dayCounter++;
+                    } else {
+                        calendarHTML += `<td></td>`;
+                    }
+                }
+                calendarHTML += `</tr>`;
+                if (dayCounter > daysInMonth) break;
+            }
+            calendarHTML += `</tbody></table>`;
+            return calendarHTML;
+        }
+
+        // カレンダー表示関数
+        function displayCalendar() {
+            document.getElementById("calendar-title").textContent = `${currentYear}年 ${currentMonth}月`;
+            document.getElementById("calendar-container").innerHTML = generateCalendar(currentYear, currentMonth);
+        }
+
+        // グローバルスコープに関数を定義
+        window.changeMonth = function(direction) {
+            currentMonth += direction;
+            if (currentMonth < 1) {
+                currentMonth = 12;
+                currentYear--;
+            } else if (currentMonth > 12) {
+                currentMonth = 1;
+                currentYear++;
+            }
+            displayCalendar();
+        };
+
+        // 初期カレンダー表示
+        document.addEventListener("DOMContentLoaded", () => {
+            displayCalendar();
+        });
+    </script>
 </body>
 </html>

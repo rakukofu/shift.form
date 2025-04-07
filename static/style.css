@@ -2,7 +2,7 @@
 body {
     font-family: Arial, sans-serif;
     margin: 0;
-    padding: 0;
+    padding: 20px;
     background-color: #f5f5f5;
 }
 
@@ -35,28 +35,26 @@ h1 {
     border: 1px solid #f5c6cb;
 }
 
-.login-form, .shift-form {
-    background-color: white;
+.login-form {
+    max-width: 400px;
+    margin: 0 auto;
     padding: 20px;
+    background-color: white;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-top: 20px;
 }
 
 .form-group {
     margin-bottom: 15px;
 }
 
-label {
+.form-group label {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
 }
 
-input[type="text"],
-input[type="password"],
-input[type="date"],
-select {
+.form-group input {
     width: 100%;
     padding: 8px;
     border: 1px solid #ddd;
@@ -78,13 +76,29 @@ button:hover {
     background-color: #45a049;
 }
 
+.message {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+
+.message.success {
+    background-color: #dff0d8;
+    color: #3c763d;
+}
+
+.message.error {
+    background-color: #f2dede;
+    color: #a94442;
+}
+
 .logout-link {
     text-align: center;
     margin-top: 20px;
 }
 
 .logout-link a {
-    color: #666;
+    color: #333;
     text-decoration: none;
 }
 
@@ -130,48 +144,65 @@ header h1 {
 
 /* カレンダー */
 table {
-    width: 80%;
-    margin: 0 auto;
+    width: 100%;
     border-collapse: collapse;
+    margin-top: 20px;
     background-color: white;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 th, td {
     border: 1px solid #ddd;
+    padding: 8px;
     text-align: center;
-    font-size: 1.2rem;
-    padding: 15px;
 }
 
 th {
-    background-color: #f0f0f0;
-    color: #555;
-}
-
-td {
-    transition: background-color 0.3s ease;
-}
-
-td:hover {
-    background-color: #e3f2fd;
-}
-
-.today {
-    background-color: #c8e6c9 !important;
-    font-weight: bold;
-    color: #2e7d32;
-}
-
-/* 祝日や週末 */
-.holiday {
-    background-color: #ffd6d6;
-    color: #c62828;
+    background-color: #f2f2f2;
 }
 
 .rest {
-    background-color: #ffe0b2;
-    color: #bf360c;
+    background-color: #f8f8f8;
+    color: #ff0000;
+}
+
+.holiday {
+    background-color: #fff0f0;
+    color: #ff0000;
+}
+
+.weekday {
+    background-color: white;
+}
+
+.morning, .afternoon {
+    margin: 5px 0;
+}
+
+select {
+    width: 100%;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+#calendar-title {
+    display: inline-block;
+    margin: 0 20px;
+}
+
+#shift-form {
+    max-width: 1200px;
+    margin: 0 auto;
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#shift-form button[type="submit"] {
+    width: auto;
+    margin-bottom: 20px;
 }
 
 #details-container {
