@@ -32,7 +32,7 @@ ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '0131')
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
-login_manager.login_view = 'login'
+login_manager.login_view = 'index'
 login_manager.login_message = 'ログインが必要です。'
 login_manager.login_message_category = 'error'
 
@@ -146,26 +146,33 @@ def delete_user(user_id):
     
     return redirect(url_for('admin_dashboard'))
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('index'))
-        
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        user = User.query.filter_by(username=username).first()
-        if user and bcrypt.check_password_hash(user.password, password):
-            login_user(user)
-            flash('ログインに成功しました。', 'success')
-            return redirect(url_for('index'))
-        else:
-            flash('ユーザー名またはパスワードが間違っています。', 'error')
-    return render_template('login.html')
-
-@app.route('/')
-@login_required
+@app.route('/', methods=['GET', 'POST'])
 def index():
+    if request.method == 'POST':
+        if 'username' in request.form and 'password' in request.form:
+            # ログイン処理
+            username = request.form['username']
+            password = request.form['password']
+            user = User.query.filter_by(username=username).first()
+            if user and bcrypt.check_password_hash(user.password, password):
+                login_user(user)
+                flash('ログインに成功しました。', 'success')
+                return redirect(url_for('index'))
+            else:
+                flash('ユーザー名またはパスワードが間違っています。', 'error')
+        elif current_user.is_authenticated:
+            # シフト送信処理
+            date = request.form['date']
+            user_name = request.form['user_name']
+            morning = request.form['morning']
+            afternoon = request.form['afternoon']
+            
+            new_shift = Shift(date=date, user_name=user_name, morning=morning, afternoon=afternoon)
+            db.session.add(new_shift)
+            db.session.commit()
+            flash('シフトを送信しました。', 'success')
+            return redirect(url_for('index'))
+    
     return render_template('index.html')
 
 @app.route('/logout')
@@ -173,7 +180,7 @@ def index():
 def logout():
     logout_user()
     flash('ログアウトしました。', 'success')
-    return redirect(url_for('login'))
+    return redirect(url_for('index'))
 
 @app.errorhandler(404)
 def not_found_error(error):
