@@ -25,11 +25,16 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     }
 }
 
+# 管理者パスワード
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD', '0131')
+
 # 初期化
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+login_manager.login_message = 'ログインが必要です。'
+login_manager.login_message_category = 'error'
 
 # モデル
 class User(UserMixin, db.Model):
@@ -143,6 +148,9 @@ def delete_user(user_id):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+        
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -159,6 +167,13 @@ def login():
 @login_required
 def index():
     return render_template('index.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    flash('ログアウトしました。', 'success')
+    return redirect(url_for('login'))
 
 @app.errorhandler(404)
 def not_found_error(error):
