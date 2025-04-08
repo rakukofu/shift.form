@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function() {
         
         let formData = new FormData(this);
 
-        fetch('/submit', {
+        fetch('/', {
             method: 'POST',
             body: formData
         })
