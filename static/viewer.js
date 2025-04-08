@@ -5,6 +5,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const nextMonthButton = document.getElementById("next-month");
     const detailsContent = document.getElementById("details-content");
 
+    // 必要な要素が存在しない場合は処理を中断
+    if (!calendarContainer || !calendarTitle || !prevMonthButton || !nextMonthButton || !detailsContent) {
+        console.log("カレンダー関連の要素が見つかりません。このページではカレンダー機能は使用できません。");
+        return;
+    }
+
     let currentYear = 2025;
     let currentMonth = 1;
     const shiftCache = {}; // シフトデータキャッシュ
@@ -70,6 +76,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function displayCalendar(year, month) {
+        if (!calendarContainer || !calendarTitle) {
+            console.log("カレンダーコンテナまたはタイトル要素が見つかりません。");
+            return;
+        }
         calendarContainer.innerHTML = generateCalendar(year, month);
         calendarTitle.textContent = `${year}年 ${month}月`;
         attachDateHoverListeners();
@@ -147,8 +157,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 100); // デバウンスを適用
     });
 
-    prevMonthButton.addEventListener("click", () => changeMonth(-1));
-    nextMonthButton.addEventListener("click", () => changeMonth(1));
+    // ボタンのイベントリスナーを設定
+    if (prevMonthButton && nextMonthButton) {
+        prevMonthButton.addEventListener("click", () => changeMonth(-1));
+        nextMonthButton.addEventListener("click", () => changeMonth(1));
+    }
 
+    // カレンダーを表示
     displayCalendar(currentYear, currentMonth);
 });

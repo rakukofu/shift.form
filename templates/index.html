@@ -45,7 +45,7 @@
             <a href="{{ url_for('viewer') }}" style="font-size: 16px; color: blue;">▶ 提出されたシフトを見る</a>
         </p>
 
-        <div style="text-align: center; margin-bottom: 20px;">
+        <div style="text-align: center; margin-block-end: 20px;">
             <button type="button" onclick="changeMonth(-1)" aria-label="前の月に変更する">← 前の月</button>
             <span id="calendar-title" style="font-size: 1.5em; font-weight: bold;"></span>
             <button type="button" onclick="changeMonth(1)" aria-label="次の月に変更する">次の月 →</button>
@@ -127,8 +127,13 @@
 
         // カレンダー表示関数
         function displayCalendar() {
-            document.getElementById("calendar-title").textContent = `${currentYear}年 ${currentMonth}月`;
-            document.getElementById("calendar-container").innerHTML = generateCalendar(currentYear, currentMonth);
+            const calendarTitle = document.getElementById("calendar-title");
+            const calendarContainer = document.getElementById("calendar-container");
+            
+            if (calendarTitle && calendarContainer) {
+                calendarTitle.textContent = `${currentYear}年 ${currentMonth}月`;
+                calendarContainer.innerHTML = generateCalendar(currentYear, currentMonth);
+            }
         }
 
         // グローバルスコープに関数を定義

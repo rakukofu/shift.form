@@ -1,60 +1,72 @@
 document.addEventListener("DOMContentLoaded", function() {
     // メッセージをセッションストレージから読み込み、表示
     const messageContainer = document.getElementById('message-container');
-    const savedMessage = sessionStorage.getItem('flashMessage');
-    if (savedMessage) {
-        const message = JSON.parse(savedMessage);
-        messageContainer.innerHTML = '';  // 以前のメッセージをクリア
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `message ${message.category}`;
-        messageDiv.textContent = message.message;
-        messageContainer.appendChild(messageDiv);
-        sessionStorage.removeItem('flashMessage');  // メッセージを一度表示したら削除
+    const shiftForm = document.getElementById('shift-form');
+
+    // メッセージコンテナが存在する場合のみ処理
+    if (messageContainer) {
+        const savedMessage = sessionStorage.getItem('flashMessage');
+        if (savedMessage) {
+            try {
+                const message = JSON.parse(savedMessage);
+                messageContainer.innerHTML = '';  // 以前のメッセージをクリア
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${message.category}`;
+                messageDiv.textContent = message.message;
+                messageContainer.appendChild(messageDiv);
+                sessionStorage.removeItem('flashMessage');  // メッセージを一度表示したら削除
+            } catch (error) {
+                console.error('メッセージの解析に失敗しました:', error);
+            }
+        }
     }
 
-    document.getElementById("shift-form").addEventListener("submit", function(event) {
-        event.preventDefault();
-        
-        let formData = new FormData(this);
-        // CSRFトークンを追加
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        formData.append('csrf_token', csrfToken);
+    // シフトフォームが存在する場合のみ処理
+    if (shiftForm) {
+        shiftForm.addEventListener("submit", function(event) {
+            event.preventDefault();
+            
+            let formData = new FormData(this);
+            // CSRFトークンを追加
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            formData.append('csrf_token', csrfToken);
 
-        fetch('/', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': csrfToken
-            },
-            credentials: 'same-origin'
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.text().then(text => {
-                    throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            // セッションストレージにメッセージを保存
-            sessionStorage.setItem('flashMessage', JSON.stringify(data));
-            // メッセージを表示
-            messageContainer.innerHTML = '';  // 以前のメッセージをクリア
-            const message = document.createElement('div');
-            message.className = `message ${data.category}`;
-            message.textContent = data.message;
-            messageContainer.appendChild(message);
-        })
-        .catch(error => {
-            console.error('エラー:', error);
-            messageContainer.innerHTML = '';  // 以前のメッセージをクリア
-            const errorMessage = document.createElement('div');
-            errorMessage.className = 'message error';
-            errorMessage.textContent = 'シフトの送信に失敗しました。もう一度お試しください。';
-            messageContainer.appendChild(errorMessage);
+            fetch('/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // セッションストレージにメッセージを保存
+                sessionStorage.setItem('flashMessage', JSON.stringify(data));
+                // メッセージを表示
+                messageContainer.innerHTML = '';  // 以前のメッセージをクリア
+                const message = document.createElement('div');
+                message.className = `message ${data.category}`;
+                message.textContent = data.message;
+                messageContainer.appendChild(message);
+            })
+            .catch(error => {
+                console.error('エラー:', error);
+                messageContainer.innerHTML = '';  // 以前のメッセージをクリア
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'message error';
+                errorMessage.textContent = 'シフトの送信に失敗しました。もう一度お試しください。';
+                messageContainer.appendChild(errorMessage);
+            });
         });
-    });
+    }
 });
 
 function updateCalendarWithShifts(shiftData) {
