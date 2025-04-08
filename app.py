@@ -99,13 +99,27 @@ def add_user():
         return redirect(url_for('index'))
     
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if not username or not password:
+            flash('ユーザー名とパスワードは必須です。', 'error')
+            return redirect(url_for('add_user'))
+        
+        # パスワードをハッシュ化
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+        
+        # 新しいユーザーを作成
         new_user = User(username=username, password=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
-        flash('新しいユーザーを追加しました。', 'success')
+        
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            flash('ユーザーを追加しました。', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash('ユーザーの追加に失敗しました。', 'error')
+        
         return redirect(url_for('admin_dashboard'))
     
     return render_template('add_user.html')
@@ -205,7 +219,7 @@ def index():
     if current_user.is_authenticated:
         return render_template('index.html')
     else:
-        return redirect(url_for('login'))
+        return render_template('index.html')
 
 @app.route('/logout')
 @login_required
@@ -238,23 +252,6 @@ def not_found_error(error):
 @app.errorhandler(500)
 def internal_error(error):
     return render_template('500.html'), 500
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        user = User.query.filter_by(username=username).first()
-        
-        if user and bcrypt.check_password_hash(user.password, password):
-            login_user(user)
-            flash('ログインしました。', 'success')
-            return redirect(url_for('index'))
-        else:
-            flash('ユーザー名またはパスワードが間違っています。', 'error')
-    
-    return render_template('login.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
