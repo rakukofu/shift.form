@@ -91,8 +91,9 @@
                     if (i === 0 && j < firstDay) {
                         calendarHTML += `<td></td>`;
                     } else if (dayCounter <= daysInMonth) {
+                        const date = `${year}-${month}-${dayCounter}`;
                         // シフト選択肢を追加
-                        calendarHTML += `<td class="${dayClass}">
+                        calendarHTML += `<td class="${dayClass}" data-date="${date}" onclick="displayShiftDetails('${date}')">
                                             ${dayCounter}<br>
                                             <div class="morning">
                                                 <label for="morning-${dayCounter}">午前</label>
