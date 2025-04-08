@@ -175,19 +175,22 @@ def index():
                 
                 # シフトデータの保存
                 shift = Shift.query.filter_by(
-                    user_id=current_user.id,
-                    date=date,
+                    user_name=current_user.username,
+                    date=date_str,
                     shift_type=shift_type
                 ).first()
                 
                 if shift:
-                    shift.value = value
+                    if shift_type == 'morning':
+                        shift.morning = value
+                    else:
+                        shift.afternoon = value
                 else:
                     new_shift = Shift(
-                        user_id=current_user.id,
-                        date=date,
-                        shift_type=shift_type,
-                        value=value
+                        user_name=current_user.username,
+                        date=date_str,
+                        morning=value if shift_type == 'morning' else None,
+                        afternoon=value if shift_type == 'afternoon' else None
                     )
                     db.session.add(new_shift)
         
@@ -202,7 +205,7 @@ def index():
     if current_user.is_authenticated:
         return render_template('index.html')
     else:
-        return render_template('index.html')
+        return redirect(url_for('login'))
 
 @app.route('/logout')
 @login_required
@@ -235,6 +238,23 @@ def not_found_error(error):
 @app.errorhandler(500)
 def internal_error(error):
     return render_template('500.html'), 500
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        user = User.query.filter_by(username=username).first()
+        
+        if user and bcrypt.check_password_hash(user.password, password):
+            login_user(user)
+            flash('ログインしました。', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('ユーザー名またはパスワードが間違っています。', 'error')
+    
+    return render_template('login.html')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
