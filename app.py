@@ -6,6 +6,9 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from flask_bcrypt import Bcrypt
 import os
 from dotenv import load_dotenv
+from werkzeug.security import generate_password_hash, check_password_hash
+from datetime import datetime
+from flask_wtf.csrf import CSRFProtect
 
 # 環境変数と設定
 load_dotenv()
@@ -35,6 +38,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'index'
 login_manager.login_message = 'ログインが必要です。'
 login_manager.login_message_category = 'error'
+csrf = CSRFProtect(app)
 
 # モデル
 class User(UserMixin, db.Model):
@@ -149,31 +153,55 @@ def delete_user(user_id):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        if 'username' in request.form and 'password' in request.form:
-            # ログイン処理
-            username = request.form['username']
-            password = request.form['password']
-            user = User.query.filter_by(username=username).first()
-            if user and bcrypt.check_password_hash(user.password, password):
-                login_user(user)
-                flash('ログインに成功しました。', 'success')
-                return redirect(url_for('index'))
-            else:
-                flash('ユーザー名またはパスワードが間違っています。', 'error')
-        elif current_user.is_authenticated:
-            # シフト送信処理
-            date = request.form['date']
-            user_name = request.form['user_name']
-            morning = request.form['morning']
-            afternoon = request.form['afternoon']
-            
-            new_shift = Shift(date=date, user_name=user_name, morning=morning, afternoon=afternoon)
-            db.session.add(new_shift)
+        if not current_user.is_authenticated:
+            return jsonify({'category': 'error', 'message': 'ログインが必要です'}), 401
+        
+        # CSRFトークンの検証
+        if not request.form.get('csrf_token') or request.form.get('csrf_token') != session.get('csrf_token'):
+            return jsonify({'category': 'error', 'message': 'CSRFトークンが無効です'}), 403
+
+        # シフトデータの処理
+        for key, value in request.form.items():
+            if '-' in key and (key.endswith('-morning') or key.endswith('-afternoon')):
+                date_str = key.rsplit('-', 1)[0]
+                shift_type = key.split('-')[-1]
+                
+                # 日付の形式を確認
+                try:
+                    date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                except ValueError:
+                    continue  # 無効な日付形式はスキップ
+                
+                # シフトデータの保存
+                shift = Shift.query.filter_by(
+                    user_id=current_user.id,
+                    date=date,
+                    shift_type=shift_type
+                ).first()
+                
+                if shift:
+                    shift.value = value
+                else:
+                    new_shift = Shift(
+                        user_id=current_user.id,
+                        date=date,
+                        shift_type=shift_type,
+                        value=value
+                    )
+                    db.session.add(new_shift)
+        
+        try:
             db.session.commit()
-            flash('シフトを送信しました。', 'success')
-            return redirect(url_for('index'))
+            return jsonify({'category': 'success', 'message': 'シフトを保存しました'})
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({'category': 'error', 'message': 'シフトの保存に失敗しました'}), 500
     
-    return render_template('index.html')
+    # GETリクエストの処理
+    if current_user.is_authenticated:
+        return render_template('index.html')
+    else:
+        return render_template('index.html')
 
 @app.route('/logout')
 @login_required

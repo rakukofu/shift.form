@@ -16,14 +16,22 @@ document.addEventListener("DOMContentLoaded", function() {
         event.preventDefault();
         
         let formData = new FormData(this);
+        // CSRFトークンを追加
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        formData.append('csrf_token', csrfToken);
 
         fetch('/', {
             method: 'POST',
-            body: formData
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                return response.text().then(text => {
+                    throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
+                });
             }
             return response.json();
         })
@@ -39,7 +47,11 @@ document.addEventListener("DOMContentLoaded", function() {
         })
         .catch(error => {
             console.error('エラー:', error);
-            alert('エラーが発生しました');
+            messageContainer.innerHTML = '';  // 以前のメッセージをクリア
+            const errorMessage = document.createElement('div');
+            errorMessage.className = 'message error';
+            errorMessage.textContent = 'シフトの送信に失敗しました。もう一度お試しください。';
+            messageContainer.appendChild(errorMessage);
         });
     });
 });
