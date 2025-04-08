@@ -8,12 +8,12 @@ import os
 from dotenv import load_dotenv
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 
 # 環境変数と設定
 load_dotenv()
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev')
+app.config['SECRET_KEY'] = os.urandom(24)
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///app.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
@@ -157,8 +157,9 @@ def index():
             return jsonify({'category': 'error', 'message': 'ログインが必要です'}), 401
         
         # CSRFトークンの検証
-        if not request.form.get('csrf_token') or request.form.get('csrf_token') != session.get('csrf_token'):
-            return jsonify({'category': 'error', 'message': 'CSRFトークンが無効です'}), 403
+        csrf_token = request.form.get('csrf_token')
+        if not csrf_token:
+            return jsonify({'category': 'error', 'message': 'CSRFトークンがありません'}), 403
 
         # シフトデータの処理
         for key, value in request.form.items():

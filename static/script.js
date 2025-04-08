@@ -25,7 +25,8 @@ document.addEventListener("DOMContentLoaded", function() {
             body: formData,
             headers: {
                 'X-CSRFToken': csrfToken
-            }
+            },
+            credentials: 'same-origin'
         })
         .then(response => {
             if (!response.ok) {
