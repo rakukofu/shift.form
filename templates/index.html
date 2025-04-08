@@ -26,6 +26,7 @@
     <div class="login-form">
         <h2>ログイン</h2>
         <form method="POST" action="{{ url_for('index') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label for="username">ユーザー名:</label>
                 <input type="text" id="username" name="username" required>

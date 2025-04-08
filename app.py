@@ -168,7 +168,19 @@ def delete_user(user_id):
 def index():
     if request.method == 'POST':
         if not current_user.is_authenticated:
-            return jsonify({'category': 'error', 'message': 'ログインが必要です'}), 401
+            # ログイン処理
+            username = request.form.get('username')
+            password = request.form.get('password')
+            
+            user = User.query.filter_by(username=username).first()
+            
+            if user and bcrypt.check_password_hash(user.password, password):
+                login_user(user)
+                flash('ログインしました。', 'success')
+                return redirect(url_for('index'))
+            else:
+                flash('ユーザー名またはパスワードが間違っています。', 'error')
+                return redirect(url_for('index'))
         
         # CSRFトークンの検証
         csrf_token = request.form.get('csrf_token')
