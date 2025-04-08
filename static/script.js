@@ -21,7 +21,12 @@ document.addEventListener("DOMContentLoaded", function() {
             method: 'POST',
             body: formData
         })
-        .then(response => response.json())  // JSONレスポンスを期待
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             // セッションストレージにメッセージを保存
             sessionStorage.setItem('flashMessage', JSON.stringify(data));
@@ -39,47 +44,57 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
-    function updateCalendarWithShifts(shiftData) {
-        document.querySelectorAll("td[data-date]").forEach(td => {
-            let date = td.getAttribute("data-date");
-            td.innerHTML += `<div class="shift-info"></div>`; // シフト情報用の div を追加
-            let shiftInfoDiv = td.querySelector(".shift-info");
+function updateCalendarWithShifts(shiftData) {
+    document.querySelectorAll("td[data-date]").forEach(td => {
+        let date = td.getAttribute("data-date");
+        td.innerHTML += `<div class="shift-info"></div>`; // シフト情報用の div を追加
+        let shiftInfoDiv = td.querySelector(".shift-info");
 
-            if (shiftData[date]) {
-                shiftData[date].forEach(shift => {
-                    let shiftText = `<p>${shift.name}: 午前(${shift.shift.morning}) / 午後(${shift.shift.afternoon})</p>`;
-                    shiftInfoDiv.innerHTML += shiftText;
-                });
-            }
-        });
-    }
+        if (shiftData[date]) {
+            shiftData[date].forEach(shift => {
+                let shiftText = `<p>${shift.name}: 午前(${shift.shift.morning}) / 午後(${shift.shift.afternoon})</p>`;
+                shiftInfoDiv.innerHTML += shiftText;
+            });
+        }
+    });
+}
 
-    function displayShiftDetails(date) {
-        fetch(`/get_shifts/${date}`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log("取得したシフトデータ:", data);
-            // シフト詳細の表示処理
-            const shiftDetails = document.getElementById('shift-details');
-            if (data && data.length > 0) {
-                let html = '<h3>シフト詳細</h3><ul>';
-                data.forEach(shift => {
-                    html += `<li>${shift.user_name}: 午前(${shift.morning || '未回答'}) / 午後(${shift.afternoon || '未回答'})</li>`;
-                });
-                html += '</ul>';
-                shiftDetails.innerHTML = html;
-            } else {
-                shiftDetails.innerHTML = '<p>この日のシフトはまだ登録されていません。</p>';
-            }
-        })
-        .catch(error => {
-            console.error('エラー:', error);
-            const shiftDetails = document.getElementById('shift-details');
-            shiftDetails.innerHTML = '<p>シフトデータの取得に失敗しました。</p>';
-        });
-    }    
+function displayShiftDetails(date) {
+    const shiftDetails = document.getElementById('shift-details');
+    shiftDetails.innerHTML = '<p>シフト情報を取得中...</p>';
+
+    fetch(`/get_shifts/${date}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new TypeError("サーバーからのレスポンスがJSONではありません");
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("取得したシフトデータ:", data);
+        if (data && data.length > 0) {
+            let html = '<h3>シフト詳細</h3><ul>';
+            data.forEach(shift => {
+                html += `<li>${shift.user_name}: 午前(${shift.morning || '未回答'}) / 午後(${shift.afternoon || '未回答'})</li>`;
+            });
+            html += '</ul>';
+            shiftDetails.innerHTML = html;
+        } else {
+            shiftDetails.innerHTML = '<p>この日のシフトはまだ登録されていません。</p>';
+        }
+    })
+    .catch(error => {
+        console.error('エラー:', error);
+        shiftDetails.innerHTML = '<p>シフトデータの取得に失敗しました。もう一度お試しください。</p>';
+    });
+}    
