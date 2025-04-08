@@ -182,6 +182,13 @@ def logout():
     flash('ログアウトしました。', 'success')
     return redirect(url_for('index'))
 
+@app.route('/get_shifts/<date>')
+@login_required
+def get_shifts(date):
+    shifts = Shift.query.filter_by(date=date).all()
+    shift_data = [shift.to_dict() for shift in shifts]
+    return jsonify(shift_data)
+
 @app.route('/viewer')
 @login_required
 def viewer():

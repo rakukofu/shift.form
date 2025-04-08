@@ -55,7 +55,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     function displayShiftDetails(date) {
-        fetch(`/shifts/${date}`)
+        fetch(`/get_shifts/${date}`)
         .then(response => response.text())
         .then(text => {
             try {
