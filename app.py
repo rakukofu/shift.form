@@ -182,6 +182,11 @@ def logout():
     flash('ログアウトしました。', 'success')
     return redirect(url_for('index'))
 
+@app.route('/viewer')
+@login_required
+def viewer():
+    return render_template('viewer.html')
+
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
