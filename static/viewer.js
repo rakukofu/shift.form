@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let currentRequestController; // 現在のリクエストコントローラー
     let allShifts = {}; // 全シフトデータを保持
     let lastClickedDate = null;
+    let allUsers = new Set(); // 全ユーザーを保持するセット
 
     const holidays = [
         { month: 1, day: 1 }, { month: 2, day: 11 }, { month: 4, day: 29 },
@@ -125,20 +126,43 @@ document.addEventListener("DOMContentLoaded", () => {
         attachDateClickListeners();
     }
 
+    // ユーザーリストを取得して選択肢に追加
+    function updateUserList() {
+        allUsers.clear();
+        Object.values(allShifts).flat().forEach(shift => {
+            allUsers.add(shift.user_name);
+        });
+        
+        // 選択肢を更新
+        const userSearch = document.getElementById("user-search");
+        const currentValue = userSearch.value;
+        userSearch.innerHTML = '<option value="">全ユーザーを表示</option>';
+        
+        Array.from(allUsers).sort().forEach(user => {
+            const option = document.createElement("option");
+            option.value = user;
+            option.textContent = user;
+            userSearch.appendChild(option);
+        });
+        
+        // 以前の選択値を復元
+        userSearch.value = currentValue;
+    }
+
     // 検索機能の実装
-    userSearch.addEventListener("input", (e) => {
-        const searchTerm = e.target.value.toLowerCase();
-        if (searchTerm === "") {
-            // 検索欄が空の場合は、最後に選択された日付の詳細を表示
+    userSearch.addEventListener("change", (e) => {
+        const selectedUser = e.target.value;
+        if (selectedUser === "") {
+            // 全ユーザーを表示
             if (lastClickedDate) {
                 updateDetails(shiftCache[lastClickedDate]);
             }
             return;
         }
 
-        // 全シフトデータから検索
+        // 選択されたユーザーのシフトを表示
         const filteredShifts = Object.values(allShifts).flat().filter(shift => 
-            shift.user_name.toLowerCase().includes(searchTerm)
+            shift.user_name === selectedUser
         );
 
         if (filteredShifts.length > 0) {
@@ -154,7 +178,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
             }).join("");
         } else {
-            detailsContent.innerHTML = `<p>該当するユーザーが見つかりません。</p>`;
+            detailsContent.innerHTML = `<p>${selectedUser}のシフトはまだ登録されていません。</p>`;
         }
     });
 
@@ -163,6 +187,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (data.length > 0) {
             // 全シフトデータを更新
             allShifts[data[0].date] = data;
+            
+            // ユーザーリストを更新
+            updateUserList();
             
             detailsContent.innerHTML = data.map(shift => {
                 let morningDisplay = shift.morning || '';
