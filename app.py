@@ -73,7 +73,7 @@ with app.app_context():
 @app.route('/admin')
 def admin_dashboard():
     if not session.get('is_admin'):
-        flash('アクセス権限がありません。', 'error')
+        flash('アクセス権限がありません。管理者としてログインしてください。', 'error')
         return redirect(url_for('admin_login'))  
     try:
         users = User.query.all()
@@ -95,6 +95,7 @@ def admin_login():
                 
             if password == ADMIN_PASSWORD:
                 session['is_admin'] = True
+                session['admin_login_time'] = datetime.now().timestamp()  # ログイン時刻を記録
                 flash('管理者としてログインしました。', 'success')
                 return redirect(url_for('admin_dashboard'))
             else:
@@ -107,7 +108,7 @@ def admin_login():
 @app.route('/admin/users/add', methods=['GET', 'POST'])
 def add_user():
     if not session.get('is_admin'):
-        flash('アクセス権限がありません。', 'error')
+        flash('アクセス権限がありません。管理者としてログインしてください。', 'error')
         return redirect(url_for('admin_login'))
     
     if request.method == 'POST':
@@ -144,7 +145,7 @@ def add_user():
 @app.route('/admin/users/edit/<int:user_id>', methods=['GET', 'POST'])
 def edit_user(user_id):
     if not session.get('is_admin'):
-        flash('アクセス権限がありません。', 'error')
+        flash('アクセス権限がありません。管理者としてログインしてください。', 'error')
         return redirect(url_for('admin_login'))
     
     user = User.query.get(user_id)
@@ -171,7 +172,7 @@ def edit_user(user_id):
 @app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
 def delete_user(user_id):
     if not session.get('is_admin'):
-        flash('アクセス権限がありません。', 'error')
+        flash('アクセス権限がありません。管理者としてログインしてください。', 'error')
         return redirect(url_for('admin_login'))
     
     user = User.query.get(user_id)
@@ -183,6 +184,13 @@ def delete_user(user_id):
         flash('指定されたユーザーが見つかりません。', 'error')
     
     return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin_logout')
+def admin_logout():
+    session.pop('is_admin', None)
+    session.pop('admin_login_time', None)
+    flash('管理者としてログアウトしました。', 'success')
+    return redirect(url_for('index'))
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
