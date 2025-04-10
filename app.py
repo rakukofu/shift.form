@@ -71,7 +71,6 @@ with app.app_context():
     db.create_all()
 
 @app.route('/admin')
-@login_required
 def admin_dashboard():
     if not session.get('is_admin'):
         flash('アクセス権限がありません。', 'error')
@@ -106,15 +105,19 @@ def admin_login():
         return render_template('500.html'), 500
 
 @app.route('/admin/users/add', methods=['GET', 'POST'])
-@login_required
 def add_user():
     if not session.get('is_admin'):
         flash('アクセス権限がありません。', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('admin_login'))
     
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        csrf_token = request.form.get('csrf_token')
+        
+        if not csrf_token:
+            flash('CSRFトークンがありません。', 'error')
+            return redirect(url_for('add_user'))
         
         if not username or not password:
             flash('ユーザー名とパスワードは必須です。', 'error')
@@ -139,11 +142,10 @@ def add_user():
     return render_template('add_user.html')
     
 @app.route('/admin/users/edit/<int:user_id>', methods=['GET', 'POST'])
-@login_required
 def edit_user(user_id):
     if not session.get('is_admin'):
         flash('アクセス権限がありません。', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('admin_login'))
     
     user = User.query.get(user_id)
     if not user:
@@ -151,6 +153,11 @@ def edit_user(user_id):
         return redirect(url_for('admin_dashboard'))
     
     if request.method == 'POST':
+        csrf_token = request.form.get('csrf_token')
+        if not csrf_token:
+            flash('CSRFトークンがありません。', 'error')
+            return redirect(url_for('edit_user', user_id=user_id))
+            
         user.username = request.form['username']
         new_password = request.form['password']
         if new_password:
@@ -162,11 +169,10 @@ def edit_user(user_id):
     return render_template('edit_users.html', user=user)
 
 @app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
-@login_required
 def delete_user(user_id):
     if not session.get('is_admin'):
         flash('アクセス権限がありません。', 'error')
-        return redirect(url_for('index'))
+        return redirect(url_for('admin_login'))
     
     user = User.query.get(user_id)
     if user:
