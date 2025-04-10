@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 messageContainer.innerHTML = '';  // 以前のメッセージをクリア
                 const errorMessage = document.createElement('div');
                 errorMessage.className = 'message error';
-                errorMessage.textContent = 'シフトの送信に失敗しました。もう一度お試しください。';
+                errorMessage.textContent = `シフトの送信に失敗しました: ${error.message}`;
                 messageContainer.appendChild(errorMessage);
             });
         });

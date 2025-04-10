@@ -182,50 +182,50 @@ def index():
                 flash('ユーザー名またはパスワードが間違っています。', 'error')
                 return redirect(url_for('index'))
         
-        # CSRFトークンの検証
-        csrf_token = request.form.get('csrf_token')
-        if not csrf_token:
-            return jsonify({'category': 'error', 'message': 'CSRFトークンがありません'}), 403
-
-        # シフトデータの処理
-        for key, value in request.form.items():
-            if '-' in key and (key.endswith('-morning') or key.endswith('-afternoon')):
-                date_str = key.rsplit('-', 1)[0]
-                shift_type = key.split('-')[-1]
-                
-                # 日付の形式を確認
-                try:
-                    date = datetime.strptime(date_str, '%Y-%m-%d').date()
-                except ValueError:
-                    continue  # 無効な日付形式はスキップ
-                
-                # シフトデータの保存
-                shift = Shift.query.filter_by(
-                    user_name=current_user.username,
-                    date=date_str,
-                    shift_type=shift_type
-                ).first()
-                
-                if shift:
-                    if shift_type == 'morning':
-                        shift.morning = value
-                    else:
-                        shift.afternoon = value
-                else:
-                    new_shift = Shift(
-                        user_name=current_user.username,
-                        date=date_str,
-                        morning=value if shift_type == 'morning' else None,
-                        afternoon=value if shift_type == 'afternoon' else None
-                    )
-                    db.session.add(new_shift)
-        
         try:
+            # CSRFトークンの検証
+            csrf_token = request.form.get('csrf_token')
+            if not csrf_token:
+                return jsonify({'category': 'error', 'message': 'CSRFトークンがありません'}), 403
+
+            # シフトデータの処理
+            for key, value in request.form.items():
+                if '-' in key and (key.endswith('-morning') or key.endswith('-afternoon')):
+                    date_str = key.rsplit('-', 1)[0]
+                    shift_type = key.split('-')[-1]
+                    
+                    # 日付の形式を確認
+                    try:
+                        date = datetime.strptime(date_str, '%Y-%m-%d').date()
+                    except ValueError:
+                        continue  # 無効な日付形式はスキップ
+                    
+                    # シフトデータの保存
+                    shift = Shift.query.filter_by(
+                        user_name=current_user.username,
+                        date=date_str
+                    ).first()
+                    
+                    if shift:
+                        if shift_type == 'morning':
+                            shift.morning = value
+                        else:
+                            shift.afternoon = value
+                    else:
+                        new_shift = Shift(
+                            user_name=current_user.username,
+                            date=date_str,
+                            morning=value if shift_type == 'morning' else None,
+                            afternoon=value if shift_type == 'afternoon' else None
+                        )
+                        db.session.add(new_shift)
+            
             db.session.commit()
             return jsonify({'category': 'success', 'message': 'シフトを保存しました'})
         except Exception as e:
             db.session.rollback()
-            return jsonify({'category': 'error', 'message': 'シフトの保存に失敗しました'}), 500
+            app.logger.error(f'シフト保存エラー: {str(e)}')
+            return jsonify({'category': 'error', 'message': f'シフトの保存に失敗しました: {str(e)}'}), 500
     
     # GETリクエストの処理
     if current_user.is_authenticated:
