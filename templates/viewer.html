@@ -12,11 +12,13 @@
     <h1>シフトカレンダー</h1>
 
     <div id="calendar-header">
-        <button id="prev-month" aria-label="前の月へ">← 前の月</button>
-        <span id="calendar-title" style="font-size: 1.5em; font-weight: bold;"></span>
-        <button id="next-month" aria-label="次の月へ">次の月 →</button>
+        <button id="prev-month">前月</button>
+        <h2 id="calendar-title"></h2>
+        <button id="next-month">次月</button>
     </div>
-
+    <div id="search-container">
+        <input type="text" id="user-search" placeholder="ユーザー名で検索">
+    </div>
     <div id="calendar-container"></div>
 
 <!-- 日付詳細を表示するコンテナ -->
