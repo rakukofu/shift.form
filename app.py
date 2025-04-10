@@ -76,20 +76,34 @@ def admin_dashboard():
     if not session.get('is_admin'):
         flash('アクセス権限がありません。', 'error')
         return redirect(url_for('admin_login'))  
-    users = User.query.all()
-    return render_template('admin.html', users=users)
+    try:
+        users = User.query.all()
+        return render_template('admin.html', users=users)
+    except Exception as e:
+        app.logger.error(f'管理者ダッシュボードエラー: {str(e)}')
+        return render_template('500.html'), 500
 
 @app.route('/admin_login', methods=['GET', 'POST'])
 def admin_login():
-    if request.method == 'POST':
-        password = request.form.get('password')  
-        if password == ADMIN_PASSWORD:
-            session['is_admin'] = True
-            flash('管理者としてログインしました。', 'success')
-            return redirect(url_for('admin_dashboard'))
-        else:
-            flash('パスワードが間違っています。', 'error')
-    return render_template('admin_login.html')
+    try:
+        if request.method == 'POST':
+            password = request.form.get('password')
+            csrf_token = request.form.get('csrf_token')
+            
+            if not csrf_token:
+                flash('CSRFトークンがありません。', 'error')
+                return redirect(url_for('admin_login'))
+                
+            if password == ADMIN_PASSWORD:
+                session['is_admin'] = True
+                flash('管理者としてログインしました。', 'success')
+                return redirect(url_for('admin_dashboard'))
+            else:
+                flash('パスワードが間違っています。', 'error')
+        return render_template('admin_login.html')
+    except Exception as e:
+        app.logger.error(f'管理者ログインエラー: {str(e)}')
+        return render_template('500.html'), 500
 
 @app.route('/admin/users/add', methods=['GET', 'POST'])
 @login_required
@@ -208,15 +222,15 @@ def index():
                     
                     if shift:
                         if shift_type == 'morning':
-                            shift.morning = value
+                            shift.morning = value if value != '未回答' else ''
                         else:
-                            shift.afternoon = value
+                            shift.afternoon = value if value != '未回答' else ''
                     else:
                         new_shift = Shift(
                             user_name=current_user.username,
                             date=date_str,
-                            morning=value if shift_type == 'morning' else None,
-                            afternoon=value if shift_type == 'afternoon' else None
+                            morning=value if shift_type == 'morning' and value != '未回答' else '',
+                            afternoon=value if shift_type == 'afternoon' and value != '未回答' else ''
                         )
                         db.session.add(new_shift)
             

@@ -2,11 +2,13 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>管理者ログイン</title>
 </head>
 <body>
     <h1>管理者ログイン</h1>
     <form method="POST" action="/admin_login">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <label>パスワード: <input type="password" name="password" required></label>
         <button type="submit">ログイン</button>
     </form>
