@@ -208,30 +208,77 @@ select {
 #details-container {
     margin: 20px auto;
     padding: 20px;
-    border: 1px solid #ddd;
+    border: 1px solid #e0e0e0;
     inline-size: 80%;
     background-color: #fff;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: left;
+    border-radius: 8px;
+}
+
+#details-container h2 {
     text-align: center;
-}
-
-#details-container {
-    position: sticky;
-    inset-block-start: 10px; /* 固定ではなくスクロールに追従する */
-    will-change: transform; /* 描画の最適化 */
-}
-
-
-#details-content p {
-    font-size: 1.2rem;
-    color: #555;
+    color: #1e88e5;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e0e0e0;
 }
 
 #details-content {
     transition: opacity 0.3s ease-in-out;
-    opacity: 1; /* 初期状態で表示 */
+    opacity: 1;
 }
 
+#details-content .shift-item {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 4px solid #1e88e5;
+}
+
+#details-content .shift-item:last-child {
+    margin-bottom: 0;
+}
+
+#details-content .shift-item p {
+    margin: 5px 0;
+    font-size: 1rem;
+    color: #333;
+    line-height: 1.5;
+}
+
+#details-content .shift-item .user-name {
+    font-weight: bold;
+    color: #1e88e5;
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+}
+
+#details-content .shift-item .shift-time {
+    display: inline-block;
+    background-color: #e3f2fd;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+#details-content .shift-item .shift-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+#details-content .shift-item .shift-status.available {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+#details-content .shift-item .shift-status.unavailable {
+    background-color: #ffebee;
+    color: #c62828;
+}
 
 .close-btn:hover {
     background-color: #c62828;
@@ -239,12 +286,12 @@ select {
 
 #search-container {
     margin: 20px auto;
-    max-width: 300px;
+    max-inline-size: 300px;
     text-align: center;
 }
 
 #user-search {
-    width: 100%;
+    inline-size: 100%;
     padding: 8px;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -279,8 +326,8 @@ select {
     }
 
     #calendar-header button {
-        width: 100%;
-        max-width: 200px;
+        inline-size: 100%;
+        max-inline-size: 200px;
     }
 
     .calendar-title {
@@ -310,16 +357,24 @@ select {
     }
 
     #details-container {
-        width: 95%;
-        padding: 10px;
+        inline-size: 95%;
+        padding: 15px;
     }
 
-    #details-content p {
+    #details-content .shift-item {
+        padding: 12px;
+    }
+
+    #details-content .shift-item p {
+        font-size: 0.95rem;
+    }
+
+    #details-content .shift-item .user-name {
         font-size: 1rem;
     }
 
     #search-container {
-        max-width: 90%;
+        max-inline-size: 90%;
     }
 
     #user-search {
@@ -330,10 +385,10 @@ select {
 /* タブレット対応 */
 @media screen and (min-width: 769px) and (max-width: 1024px) {
     #shift-form {
-        max-width: 95%;
+        max-inline-size: 95%;
     }
 
     #details-container {
-        width: 90%;
+        inline-size: 90%;
     }
 }

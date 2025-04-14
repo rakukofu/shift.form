@@ -153,32 +153,38 @@ document.addEventListener("DOMContentLoaded", () => {
     userSearch.addEventListener("change", (e) => {
         const selectedUser = e.target.value;
         if (selectedUser === "") {
-            // 全ユーザーを表示
             if (lastClickedDate) {
                 updateDetails(shiftCache[lastClickedDate]);
             }
             return;
         }
 
-        // 選択されたユーザーのシフトを表示
         const filteredShifts = Object.values(allShifts).flat().filter(shift => 
             shift.user_name === selectedUser
         );
 
         if (filteredShifts.length > 0) {
             detailsContent.innerHTML = filteredShifts.map(shift => {
-                let morningDisplay = shift.morning || '';
-                let afternoonDisplay = shift.afternoon || '';
+                let morningStatus = getShiftStatusHTML('午前', shift.morning);
+                let afternoonStatus = getShiftStatusHTML('午後', shift.afternoon);
+                
                 return `
-                    <p><strong>日付:</strong> ${shift.date}</p>
-                    <p><strong>ユーザー:</strong> ${shift.user_name}</p>
-                    ${morningDisplay ? `<p><strong>午前:</strong> ${morningDisplay}</p>` : ''}
-                    ${afternoonDisplay ? `<p><strong>午後:</strong> ${afternoonDisplay}</p>` : ''}
-                    <hr>
+                    <div class="shift-item">
+                        <p class="user-name">${shift.user_name}</p>
+                        <p><strong>日付:</strong> ${shift.date}</p>
+                        <div class="shift-times">
+                            ${morningStatus}
+                            ${afternoonStatus}
+                        </div>
+                    </div>
                 `;
             }).join("");
         } else {
-            detailsContent.innerHTML = `<p>${selectedUser}のシフトはまだ登録されていません。</p>`;
+            detailsContent.innerHTML = `
+                <div class="shift-item">
+                    <p>${selectedUser}のシフトはまだ登録されていません。</p>
+                </div>
+            `;
         }
     });
 
@@ -192,18 +198,40 @@ document.addEventListener("DOMContentLoaded", () => {
             updateUserList();
             
             detailsContent.innerHTML = data.map(shift => {
-                let morningDisplay = shift.morning || '';
-                let afternoonDisplay = shift.afternoon || '';
+                let morningStatus = getShiftStatusHTML('午前', shift.morning);
+                let afternoonStatus = getShiftStatusHTML('午後', shift.afternoon);
+                
                 return `
-                    <p><strong>ユーザー:</strong> ${shift.user_name}</p>
-                    ${morningDisplay ? `<p><strong>午前:</strong> ${morningDisplay}</p>` : ''}
-                    ${afternoonDisplay ? `<p><strong>午後:</strong> ${afternoonDisplay}</p>` : ''}
-                    <hr>
+                    <div class="shift-item">
+                        <p class="user-name">${shift.user_name}</p>
+                        <div class="shift-times">
+                            ${morningStatus}
+                            ${afternoonStatus}
+                        </div>
+                    </div>
                 `;
             }).join("");
         } else {
-            detailsContent.innerHTML = `<p>シフトデータがありません。</p>`;
+            detailsContent.innerHTML = `
+                <div class="shift-item">
+                    <p>この日のシフトはまだ登録されていません。</p>
+                </div>
+            `;
         }
+    }
+
+    function getShiftStatusHTML(time, status) {
+        if (!status) return '';
+        
+        const statusClass = status === '〇' ? 'available' : 'unavailable';
+        const statusText = status === '〇' ? '出勤可能' : '出勤不可';
+        
+        return `
+            <p>
+                <span class="shift-time">${time}</span>
+                <span class="shift-status ${statusClass}">${statusText}</span>
+            </p>
+        `;
     }
 
     // スクロール時のジャーキーな動きを防ぐためのイベント最適化
