@@ -239,9 +239,17 @@ def index():
                         if shift_type == 'morning':
                             if value != '未回答':  # 未回答の場合は既存の値を保持
                                 shift.morning = value
+                            else:
+                                shift.morning = None
                         else:
                             if value != '未回答':  # 未回答の場合は既存の値を保持
                                 shift.afternoon = value
+                            else:
+                                shift.afternoon = None
+                        
+                        # 午前も午後も未回答の場合はシフトデータを削除
+                        if shift.morning is None and shift.afternoon is None:
+                            db.session.delete(shift)
                     else:
                         # 新しいシフトデータを作成（未回答の場合は作成しない）
                         if value != '未回答':
@@ -276,7 +284,13 @@ def logout():
 @app.route('/get_shifts/<date>')
 @login_required
 def get_shifts(date):
-    shifts = Shift.query.filter_by(date=date).all()
+    # 未回答（None）のシフトを除外して取得
+    shifts = Shift.query.filter_by(date=date).filter(
+        db.or_(
+            Shift.morning.isnot(None),
+            Shift.afternoon.isnot(None)
+        )
+    ).all()
     shift_data = [shift.to_dict() for shift in shifts]
     return jsonify(shift_data)
 
