@@ -167,7 +167,7 @@ def edit_user(user_id):
         flash('ユーザー情報を更新しました。', 'success')
         return redirect(url_for('admin_dashboard'))
     
-    return render_template('edit_users.html', user=user)
+    return render_template('edit_user.html', user=user)
 
 @app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
 def delete_user(user_id):
