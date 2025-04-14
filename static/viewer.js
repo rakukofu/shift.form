@@ -190,34 +190,71 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function updateDetails(data) {
         console.log("データ更新:", data);
-        if (data.length > 0) {
-            // 全シフトデータを更新
-            allShifts[data[0].date] = data;
-            
-            // ユーザーリストを更新
-            updateUserList();
-            
-            detailsContent.innerHTML = data.map(shift => {
-                let morningStatus = getShiftStatusHTML('午前', shift.morning);
-                let afternoonStatus = getShiftStatusHTML('午後', shift.afternoon);
-                
-                return `
-                    <div class="shift-item">
-                        <p class="user-name">${shift.user_name}</p>
-                        <div class="shift-times">
-                            ${morningStatus}
-                            ${afternoonStatus}
+        const detailsContainer = document.getElementById('details-container');
+        const selectedUser = document.getElementById('user-search').value;
+        
+        if (!data || !data.date) {
+            detailsContainer.innerHTML = '<p>日付を選択してください。</p>';
+            return;
+        }
+
+        const shifts = data.shifts || [];
+        let content = '';
+
+        if (selectedUser) {
+            // 特定のユーザーのシフトを表示
+            const userShifts = shifts.filter(shift => shift.user_name === selectedUser);
+            if (userShifts.length > 0) {
+                content = `
+                    <h2>${selectedUser}のシフト詳細</h2>
+                    <div class="shift-details">
+                        <div class="shift-header">
+                            <div class="shift-time">午前</div>
+                            <div class="shift-time">午後</div>
+                        </div>
+                        <div class="shift-row">
+                            <div class="shift-status ${userShifts[0].morning === '出勤可能' ? 'available' : 'unavailable'}">
+                                ${userShifts[0].morning}
+                            </div>
+                            <div class="shift-status ${userShifts[0].afternoon === '出勤可能' ? 'available' : 'unavailable'}">
+                                ${userShifts[0].afternoon}
+                            </div>
                         </div>
                     </div>
                 `;
-            }).join("");
+            } else {
+                content = `<p>${selectedUser}のシフトは登録されていません。</p>`;
+            }
         } else {
-            detailsContent.innerHTML = `
-                <div class="shift-item">
-                    <p>この日のシフトはまだ登録されていません。</p>
-                </div>
-            `;
+            // 全ユーザーのシフトを表示
+            if (shifts.length > 0) {
+                content = `
+                    <h2>${data.date}のシフト詳細</h2>
+                    <div class="shift-details">
+                        <div class="shift-header">
+                            <div class="shift-name">名前</div>
+                            <div class="shift-time">午前</div>
+                            <div class="shift-time">午後</div>
+                        </div>
+                        ${shifts.map(shift => `
+                            <div class="shift-row">
+                                <div class="shift-name">${shift.user_name}</div>
+                                <div class="shift-status ${shift.morning === '出勤可能' ? 'available' : 'unavailable'}">
+                                    ${shift.morning}
+                                </div>
+                                <div class="shift-status ${shift.afternoon === '出勤可能' ? 'available' : 'unavailable'}">
+                                    ${shift.afternoon}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                content = `<p>${data.date}のシフトは登録されていません。</p>`;
+            }
         }
+
+        detailsContainer.innerHTML = content;
     }
 
     function getShiftStatusHTML(time, status) {
