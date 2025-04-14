@@ -95,7 +95,20 @@ document.addEventListener("DOMContentLoaded", () => {
                     const signal = currentRequestController.signal;
 
                     fetch(`/get_shifts/${date}`, { method: "GET", signal })
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.text().then(text => {
+                                try {
+                                    return JSON.parse(text);
+                                } catch (e) {
+                                    console.error("JSON解析エラー:", e);
+                                    console.error("レスポンステキスト:", text);
+                                    throw new Error("サーバーからのレスポンスがJSON形式ではありません");
+                                }
+                            });
+                        })
                         .then(data => {
                             currentRequestController = null;
                             const formattedData = {
@@ -110,7 +123,12 @@ document.addEventListener("DOMContentLoaded", () => {
                                 console.log("リクエストがキャンセルされました:", date);
                             } else {
                                 console.error("エラー:", error);
-                                detailsContainer.innerHTML = `<p>データ取得中にエラーが発生しました。</p>`;
+                                detailsContainer.innerHTML = `
+                                    <div class="error-message">
+                                        <p>データ取得中にエラーが発生しました。</p>
+                                        <p>エラーの詳細: ${error.message}</p>
+                                    </div>
+                                `;
                             }
                         });
                 }

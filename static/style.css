@@ -462,3 +462,20 @@ select {
         padding: 4px;
     }
 }
+
+.error-message {
+    background-color: #ffebee;
+    border: 1px solid #ffcdd2;
+    border-radius: 4px;
+    padding: 15px;
+    margin: 10px 0;
+    color: #c62828;
+}
+
+.error-message p {
+    margin: 5px 0;
+}
+
+.error-message p:first-child {
+    font-weight: bold;
+}
