@@ -235,16 +235,18 @@ def index():
                     ).first()
                     
                     if shift:
+                        # 既存のシフトデータを更新
                         if shift_type == 'morning':
-                            shift.morning = value if value != '未回答' else ''
+                            shift.morning = value if value != '未回答' else None
                         else:
-                            shift.afternoon = value if value != '未回答' else ''
+                            shift.afternoon = value if value != '未回答' else None
                     else:
+                        # 新しいシフトデータを作成
                         new_shift = Shift(
                             user_name=current_user.username,
                             date=date_str,
-                            morning=value if shift_type == 'morning' and value != '未回答' else '',
-                            afternoon=value if shift_type == 'afternoon' and value != '未回答' else ''
+                            morning=value if shift_type == 'morning' and value != '未回答' else None,
+                            afternoon=value if shift_type == 'afternoon' and value != '未回答' else None
                         )
                         db.session.add(new_shift)
             
