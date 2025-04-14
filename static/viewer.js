@@ -3,11 +3,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const calendarTitle = document.getElementById("calendar-title");
     const prevMonthButton = document.getElementById("prev-month");
     const nextMonthButton = document.getElementById("next-month");
-    const detailsContent = document.getElementById("details-content");
+    const detailsContainer = document.getElementById("details-container");
     const userSearch = document.getElementById("user-search");
 
     // 必要な要素が存在しない場合は処理を中断
-    if (!calendarContainer || !calendarTitle || !prevMonthButton || !nextMonthButton || !detailsContent || !userSearch) {
+    if (!calendarContainer || !calendarTitle || !prevMonthButton || !nextMonthButton || !detailsContainer || !userSearch) {
         console.log("カレンダー関連の要素が見つかりません。このページではカレンダー機能は使用できません。");
         return;
     }
@@ -98,15 +98,19 @@ document.addEventListener("DOMContentLoaded", () => {
                         .then(response => response.json())
                         .then(data => {
                             currentRequestController = null;
-                            shiftCache[date] = data;
-                            updateDetails(data);
+                            const formattedData = {
+                                date: date,
+                                shifts: data
+                            };
+                            shiftCache[date] = formattedData;
+                            updateDetails(formattedData);
                         })
                         .catch(error => {
                             if (error.name === "AbortError") {
                                 console.log("リクエストがキャンセルされました:", date);
                             } else {
                                 console.error("エラー:", error);
-                                detailsContent.innerHTML = `<p>データ取得中にエラーが発生しました。</p>`;
+                                detailsContainer.innerHTML = `<p>データ取得中にエラーが発生しました。</p>`;
                             }
                         });
                 }
@@ -151,38 +155,16 @@ document.addEventListener("DOMContentLoaded", () => {
     userSearch.addEventListener("change", (e) => {
         const selectedUser = e.target.value;
         if (selectedUser === "") {
-            if (lastClickedDate) {
+            if (lastClickedDate && shiftCache[lastClickedDate]) {
                 updateDetails(shiftCache[lastClickedDate]);
             }
             return;
         }
 
-        const filteredShifts = Object.values(allShifts).flat().filter(shift => 
-            shift.user_name === selectedUser
-        );
-
-        if (filteredShifts.length > 0) {
-            detailsContent.innerHTML = filteredShifts.map(shift => {
-                let morningStatus = getShiftStatusHTML('午前', shift.morning);
-                let afternoonStatus = getShiftStatusHTML('午後', shift.afternoon);
-                
-                return `
-                    <div class="shift-item">
-                        <p class="user-name">${shift.user_name}</p>
-                        <p><strong>日付:</strong> ${shift.date}</p>
-                        <div class="shift-times">
-                            ${morningStatus}
-                            ${afternoonStatus}
-                        </div>
-                    </div>
-                `;
-            }).join("");
+        if (lastClickedDate && shiftCache[lastClickedDate]) {
+            updateDetails(shiftCache[lastClickedDate]);
         } else {
-            detailsContent.innerHTML = `
-                <div class="shift-item">
-                    <p>${selectedUser}のシフトはまだ登録されていません。</p>
-                </div>
-            `;
+            detailsContainer.innerHTML = `<p>日付を選択してください。</p>`;
         }
     });
 
