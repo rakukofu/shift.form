@@ -262,3 +262,78 @@ select {
 #user-search option {
     padding: 8px;
 }
+
+/* モバイル対応 */
+@media screen and (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    .container {
+        padding: 10px;
+    }
+
+    #calendar-header {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    #calendar-header button {
+        width: 100%;
+        max-width: 200px;
+    }
+
+    .calendar-title {
+        font-size: 1.4rem;
+        margin: 10px 0;
+    }
+
+    table {
+        font-size: 0.9rem;
+    }
+
+    th, td {
+        padding: 4px;
+    }
+
+    .morning, .afternoon {
+        margin: 2px 0;
+    }
+
+    select {
+        padding: 4px;
+        font-size: 0.9rem;
+    }
+
+    #shift-form {
+        padding: 10px;
+    }
+
+    #details-container {
+        width: 95%;
+        padding: 10px;
+    }
+
+    #details-content p {
+        font-size: 1rem;
+    }
+
+    #search-container {
+        max-width: 90%;
+    }
+
+    #user-search {
+        font-size: 0.9rem;
+    }
+}
+
+/* タブレット対応 */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+    #shift-form {
+        max-width: 95%;
+    }
+
+    #details-container {
+        width: 90%;
+    }
+}
