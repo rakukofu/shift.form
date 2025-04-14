@@ -81,8 +81,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function attachDateClickListeners() {
         const dateCells = calendarContainer.querySelectorAll("[data-date]");
-        let lastClickedDate = null;
-
         dateCells.forEach(cell => {
             cell.addEventListener("click", () => {
                 const date = cell.getAttribute("data-date");
