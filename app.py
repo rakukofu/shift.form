@@ -237,18 +237,21 @@ def index():
                     if shift:
                         # 既存のシフトデータを更新
                         if shift_type == 'morning':
-                            shift.morning = value if value != '未回答' else None
+                            if value != '未回答':  # 未回答の場合は既存の値を保持
+                                shift.morning = value
                         else:
-                            shift.afternoon = value if value != '未回答' else None
+                            if value != '未回答':  # 未回答の場合は既存の値を保持
+                                shift.afternoon = value
                     else:
-                        # 新しいシフトデータを作成
-                        new_shift = Shift(
-                            user_name=current_user.username,
-                            date=date_str,
-                            morning=value if shift_type == 'morning' and value != '未回答' else None,
-                            afternoon=value if shift_type == 'afternoon' and value != '未回答' else None
-                        )
-                        db.session.add(new_shift)
+                        # 新しいシフトデータを作成（未回答の場合は作成しない）
+                        if value != '未回答':
+                            new_shift = Shift(
+                                user_name=current_user.username,
+                                date=date_str,
+                                morning=value if shift_type == 'morning' else None,
+                                afternoon=value if shift_type == 'afternoon' else None
+                            )
+                            db.session.add(new_shift)
             
             db.session.commit()
             return jsonify({'category': 'success', 'message': 'シフトを保存しました'})
