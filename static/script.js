@@ -1,33 +1,28 @@
 document.addEventListener("DOMContentLoaded", function() {
-    // メッセージをセッションストレージから読み込み、表示
     const messageContainer = document.getElementById('message-container');
     const shiftForm = document.getElementById('shift-form');
 
-    // メッセージコンテナが存在する場合のみ処理
     if (messageContainer) {
         const savedMessage = sessionStorage.getItem('flashMessage');
         if (savedMessage) {
             try {
                 const message = JSON.parse(savedMessage);
-                messageContainer.innerHTML = '';  // 以前のメッセージをクリア
+                messageContainer.innerHTML = '';
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${message.category}`;
                 messageDiv.textContent = message.message;
                 messageContainer.appendChild(messageDiv);
-                sessionStorage.removeItem('flashMessage');  // メッセージを一度表示したら削除
+                sessionStorage.removeItem('flashMessage');
             } catch (error) {
                 console.error('メッセージの解析に失敗しました:', error);
             }
         }
     }
 
-    // シフトフォームが存在する場合のみ処理
     if (shiftForm) {
         shiftForm.addEventListener("submit", function(event) {
             event.preventDefault();
-            
-            let formData = new FormData(this);
-            // CSRFトークンを追加
+            const formData = new FormData(this);
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             formData.append('csrf_token', csrfToken);
 
@@ -41,17 +36,13 @@ document.addEventListener("DOMContentLoaded", function() {
             })
             .then(response => {
                 if (!response.ok) {
-                    return response.text().then(text => {
-                        throw new Error(`HTTP error! status: ${response.status}, body: ${text}`);
-                    });
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 return response.json();
             })
             .then(data => {
-                // セッションストレージにメッセージを保存
                 sessionStorage.setItem('flashMessage', JSON.stringify(data));
-                // メッセージを表示
-                messageContainer.innerHTML = '';  // 以前のメッセージをクリア
+                messageContainer.innerHTML = '';
                 const message = document.createElement('div');
                 message.className = `message ${data.category}`;
                 message.textContent = data.message;
@@ -59,11 +50,7 @@ document.addEventListener("DOMContentLoaded", function() {
             })
             .catch(error => {
                 console.error('エラー:', error);
-                messageContainer.innerHTML = '';  // 以前のメッセージをクリア
-                const errorMessage = document.createElement('div');
-                errorMessage.className = 'message error';
-                errorMessage.textContent = `シフトの送信に失敗しました: ${error.message}`;
-                messageContainer.appendChild(errorMessage);
+                messageContainer.innerHTML = '';
             });
         });
     }
@@ -72,7 +59,7 @@ document.addEventListener("DOMContentLoaded", function() {
 function updateCalendarWithShifts(shiftData) {
     document.querySelectorAll("td[data-date]").forEach(td => {
         let date = td.getAttribute("data-date");
-        td.innerHTML += `<div class="shift-info"></div>`; // シフト情報用の div を追加
+        td.innerHTML += `<div class="shift-info"></div>`; 
         let shiftInfoDiv = td.querySelector(".shift-info");
 
         if (shiftData[date]) {
@@ -122,4 +109,4 @@ function displayShiftDetails(date) {
         console.error('エラー:', error);
         shiftDetails.innerHTML = '<p>シフトデータの取得に失敗しました。もう一度お試しください。</p>';
     });
-}    
+}
