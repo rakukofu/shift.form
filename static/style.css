@@ -453,11 +453,11 @@ select {
     .shift-details {
         font-size: 14px;
     }
-    
+
     .shift-header, .shift-row {
         padding: 8px;
     }
-    
+
     .shift-name, .shift-time, .shift-status {
         padding: 4px;
     }
@@ -478,4 +478,16 @@ select {
 
 .error-message p:first-child {
     font-weight: bold;
+}
+
+.note {
+    margin: 2px 0;
+}
+
+.note-input {
+    width: 100%;
+    padding: 2px;
+    font-size: 12px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
 }

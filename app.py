@@ -52,6 +52,7 @@ class Shift(db.Model):
     user_name = db.Column(db.String(50), nullable=False)
     morning = db.Column(db.String(50), nullable=True)
     afternoon = db.Column(db.String(50), nullable=True)
+    note = db.Column(db.Text, nullable=True)
 
     def to_dict(self):
         return {
