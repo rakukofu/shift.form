@@ -59,7 +59,8 @@ class Shift(db.Model):
             'date': self.date,
             'user_name': self.user_name,
             'morning': self.morning,
-            'afternoon': self.afternoon
+            'afternoon': self.afternoon,
+            'note': self.note
         }
 
 # ログインユーザー情報を取得
@@ -89,11 +90,11 @@ def admin_login():
         if request.method == 'POST':
             password = request.form.get('password')
             csrf_token = request.form.get('csrf_token')
-            
+
             if not csrf_token:
                 flash('CSRFトークンがありません。', 'error')
                 return redirect(url_for('admin_login'))
-                
+
             if password == ADMIN_PASSWORD:
                 session['is_admin'] = True
                 session['admin_login_time'] = datetime.now().timestamp()  # ログイン時刻を記録
@@ -111,26 +112,26 @@ def add_user():
     if not session.get('is_admin'):
         flash('アクセス権限がありません。管理者としてログインしてください。', 'error')
         return redirect(url_for('admin_login'))
-    
+
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
         csrf_token = request.form.get('csrf_token')
-        
+
         if not csrf_token:
             flash('CSRFトークンがありません。', 'error')
             return redirect(url_for('add_user'))
-        
+
         if not username or not password:
             flash('ユーザー名とパスワードは必須です。', 'error')
             return redirect(url_for('add_user'))
-        
+
         # パスワードをハッシュ化
         hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-        
+
         # 新しいユーザーを作成
         new_user = User(username=username, password=hashed_password)
-        
+
         try:
             db.session.add(new_user)
             db.session.commit()
@@ -138,28 +139,28 @@ def add_user():
         except Exception as e:
             db.session.rollback()
             flash('ユーザーの追加に失敗しました。', 'error')
-        
+
         return redirect(url_for('admin_dashboard'))
-    
+
     return render_template('add_user.html')
-    
+
 @app.route('/admin/users/edit/<int:user_id>', methods=['GET', 'POST'])
 def edit_user(user_id):
     if not session.get('is_admin'):
         flash('アクセス権限がありません。管理者としてログインしてください。', 'error')
         return redirect(url_for('admin_login'))
-    
+
     user = User.query.get(user_id)
     if not user:
         flash('指定されたユーザーが見つかりません。', 'error')
         return redirect(url_for('admin_dashboard'))
-    
+
     if request.method == 'POST':
         csrf_token = request.form.get('csrf_token')
         if not csrf_token:
             flash('CSRFトークンがありません。', 'error')
             return redirect(url_for('edit_user', user_id=user_id))
-            
+
         user.username = request.form['username']
         new_password = request.form['password']
         if new_password:
@@ -167,7 +168,7 @@ def edit_user(user_id):
         db.session.commit()
         flash('ユーザー情報を更新しました。', 'success')
         return redirect(url_for('admin_dashboard'))
-    
+
     return render_template('edit_user.html', user=user)
 
 @app.route('/admin/users/delete/<int:user_id>', methods=['POST'])
@@ -175,7 +176,7 @@ def delete_user(user_id):
     if not session.get('is_admin'):
         flash('アクセス権限がありません。管理者としてログインしてください。', 'error')
         return redirect(url_for('admin_login'))
-    
+
     user = User.query.get(user_id)
     if user:
         db.session.delete(user)
@@ -183,7 +184,7 @@ def delete_user(user_id):
         flash(f'ユーザー {user.username} を削除しました。', 'success')
     else:
         flash('指定されたユーザーが見つかりません。', 'error')
-    
+
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin_logout')
@@ -200,9 +201,9 @@ def index():
             # ログイン処理
             username = request.form.get('username')
             password = request.form.get('password')
-            
+
             user = User.query.filter_by(username=username).first()
-            
+
             if user and bcrypt.check_password_hash(user.password, password):
                 login_user(user)
                 flash('ログインしました。', 'success')
@@ -210,7 +211,7 @@ def index():
             else:
                 flash('ユーザー名またはパスワードが間違っています。', 'error')
                 return redirect(url_for('index'))
-        
+
         try:
             # CSRFトークンの検証
             csrf_token = request.form.get('csrf_token')
@@ -222,19 +223,19 @@ def index():
                 if '-' in key and (key.endswith('-morning') or key.endswith('-afternoon')):
                     date_str = key.rsplit('-', 1)[0]
                     shift_type = key.split('-')[-1]
-                    
+
                     # 日付の形式を確認
                     try:
                         date = datetime.strptime(date_str, '%Y-%m-%d').date()
                     except ValueError:
                         continue  # 無効な日付形式はスキップ
-                    
+
                     # シフトデータの保存
                     shift = Shift.query.filter_by(
                         user_name=current_user.username,
                         date=date_str
                     ).first()
-                    
+
                     if shift:
                         # 既存のシフトデータを更新
                         if shift_type == 'morning':
@@ -247,28 +248,30 @@ def index():
                                 shift.afternoon = value
                             else:
                                 shift.afternoon = None
-                        
+
                         # 午前も午後も未回答の場合はシフトデータを削除
                         if shift.morning is None and shift.afternoon is None:
                             db.session.delete(shift)
                     else:
                         # 新しいシフトデータを作成（未回答の場合は作成しない）
                         if value != '未回答':
+                            note = request.form.get(f'{date_str}-note', '')
                             new_shift = Shift(
                                 user_name=current_user.username,
                                 date=date_str,
                                 morning=value if shift_type == 'morning' else None,
-                                afternoon=value if shift_type == 'afternoon' else None
+                                afternoon=value if shift_type == 'afternoon' else None,
+                                note=note
                             )
                             db.session.add(new_shift)
-            
+
             db.session.commit()
             return jsonify({'category': 'success', 'message': 'シフトを保存しました'})
         except Exception as e:
             db.session.rollback()
             app.logger.error(f'シフト保存エラー: {str(e)}')
             return jsonify({'category': 'error', 'message': f'シフトの保存に失敗しました: {str(e)}'}), 500
-    
+
     # GETリクエストの処理
     if current_user.is_authenticated:
         return render_template('index.html')
