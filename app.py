@@ -21,11 +21,7 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_recycle': 300,
     'pool_size': 5,
     'max_overflow': 10,
-    'pool_timeout': 30,
-    'connect_args': {
-        'sslmode': 'require',
-        'connect_timeout': 10
-    }
+    'pool_timeout': 30
 }
 
 # 管理者パスワード
