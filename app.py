@@ -245,7 +245,7 @@ def index():
 
             if user and bcrypt.check_password_hash(user.password, password):
                 login_user(user)
-                flash('ログインし��した。', 'success')
+                flash('ログインしました。', 'success')
                 return redirect(url_for('index'))
             else:
                 flash('ユーザー名またはパスワードが間違っています。', 'error')
@@ -353,111 +353,6 @@ def not_found_error(error):
 
 @app.errorhandler(500)
 def internal_error(error):
-    return render_template('500.html'), 500
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
-            csrf_token = request.form.get('csrf_token')
-            if not csrf_token:
-                return jsonify({'category': 'error', 'message': 'CSRFトークンがありません'}), 403
-
-            # シフトデータの処理
-            for key, value in request.form.items():
-                if '-' in key and (key.endswith('-morning') or key.endswith('-afternoon')):
-                    date_str = key.rsplit('-', 1)[0]
-                    shift_type = key.split('-')[-1]
-
-                    # 日付の形式を確認
-                    try:
-                        date = datetime.strptime(date_str, '%Y-%m-%d').date()
-                    except ValueError:
-                        continue  # 無効な日付形式はスキップ
-
-                    # シフトデータの保存
-                    shift = Shift.query.filter_by(
-                        user_name=current_user.username,
-                        date=date_str
-                    ).first()
-
-                    if shift:
-                        # 既存のシフトデータを更新
-                        if shift_type == 'morning':
-                            if value != '未回答':  # 未回答の場合は既存の値を保持
-                                shift.morning = value
-                            else:
-                                shift.morning = None
-                        else:
-                            if value != '未回答':  # 未回答の場合は既存の値を保持
-                                shift.afternoon = value
-                            else:
-                                shift.afternoon = None
-
-                        # 午前も午後も未回答の場合はシフトデータを削除
-                        if shift.morning is None and shift.afternoon is None:
-                            db.session.delete(shift)
-                    else:
-                        # 新しいシフトデータを作成（未回答の場合は作成しない）
-                        if value != '未回答':
-                            note = request.form.get(f'{date_str}-note', '')
-                            new_shift = Shift(
-                                user_name=current_user.username,
-                                date=date_str,
-                                morning=value if shift_type == 'morning' else None,
-                                afternoon=value if shift_type == 'afternoon' else None,
-                                note=note
-                            )
-                            db.session.add(new_shift)
-
-            db.session.commit()
-            return jsonify({'category': 'success', 'message': 'シフトを保存しました'})
-        except Exception as e:
-            db.session.rollback()
-            app.logger.error(f'シフト保存エラー: {str(e)}')
-            return jsonify({'category': 'error', 'message': f'シフトの保存に失敗しました: {str(e)}'}), 500
-
-    # GETリクエストの処理
-    if current_user.is_authenticated:
-        return render_template('index.html')
-    else:
-        return render_template('index.html')
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    flash('ログアウトしました。', 'success')
-    return redirect(url_for('index'))
-
-@app.route('/get_shifts/<date>')
-@login_required
-def get_shifts(date):
-    # 未回答（None）のシフトを除外して取得
-    shifts = Shift.query.filter_by(date=date).filter(
-        db.or_(
-            Shift.morning.isnot(None),
-            Shift.afternoon.isnot(None)
-        )
-    ).all()
-    shift_data = [shift.to_dict() for shift in shifts]
-    return jsonify(shift_data)
-
-@app.route('/viewer')
-@login_required
-def viewer():
-    return render_template('viewer.html')
-
-@app.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
-                             'favicon.ico', mimetype='image/vnd.microsoft.icon')
-
-@app.errorhandler(404)
-def not_found_error(error):
-    return render_template('404.html'), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-        app.logger.error(f'管理者ダッシュボードエラー: {str(e)}')
     return render_template('500.html'), 500
 
 if __name__ == '__main__':
