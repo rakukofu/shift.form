@@ -161,3 +161,26 @@
     </script>
 </body>
 </html>
+
+def read_file(filename, encoding='utf-8'):
+    """
+    明示的なエンコーディング処理でファイルを読み込みます。
+
+    引数:
+        filename: ファイルパス
+        encoding: 使用するエンコーディング（デフォルト: utf-8）
+
+    戻り値:
+        ファイルの内容を文字列として
+    """
+    try:
+        with open(filename, 'r', encoding=encoding) as f:
+            return f.read()
+    except UnicodeDecodeError:
+        # 指定されたエンコーディングが失敗した場合、代替案を試すか
+        # エラーを適切に処理する
+        print(f"エラー: {filename}を{encoding}エンコーディングで読み込めませんでした")
+        raise
+
+# 使用例:
+# content = read_file('myfile.txt')
